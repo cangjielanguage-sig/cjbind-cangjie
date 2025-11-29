@@ -35,3 +35,7 @@ struct Point {
     };
     int z;
 };
+
+int a = 0;
+
+unsigned int b = 0;
