@@ -7,7 +7,7 @@ import cjbind.result.Result
 import cjbind.clang
 import cjbind.options.CjbindOptions
 
-public type ItemId = UIntNative
+public type ItemId = UInt64
 
 public type TypeId = ItemId
 
@@ -213,7 +213,7 @@ public class CjbindContext {
     }
 
     public func nextItemId(): ItemId {
-        let ret = UIntNative(this.items.size)
+        let ret = UInt64(this.items.size)
         this.items.add(None)
         return ret
     }
@@ -538,7 +538,7 @@ public class CjbindContext {
                 let idx = v[0]
                 let it = v[1]
                 let ret: Option<(ItemId, Item)> = match (it) {
-                    case Some(v) => (UIntNative(idx), v)
+                    case Some(v) => (UInt64(idx), v)
                     case None => None
                 }
                 ret
