@@ -213,8 +213,8 @@ public enum Ints <: ToTokens {
         let tokens = Tokens()
         
         match (this) {
-            case Int(v) => tokens.append(Token(TokenKind.INTEGER_LITERAL, "${v}i64"))
-            case UInt(v) => tokens.append(Token(TokenKind.INTEGER_LITERAL, "${v}u64"))
+            case Int(v) => tokens.append(Token(TokenKind.INTEGER_LITERAL, "${v}"))
+            case UInt(v) => tokens.append(Token(TokenKind.INTEGER_LITERAL, "${v}"))
         }
 
         return tokens
