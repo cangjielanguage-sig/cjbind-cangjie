@@ -3,12 +3,15 @@ package cjbind.ir
 import std.collection.{HashSet, contains}
 import cjbind.clang
 import cjbind.result.Result
+import std.sync.AtomicUInt64
 
 public type ItemSet = HashSet<ItemId>
 
 public interface IsOpaque<Extra> {
     func isOpaque(ctx: CjbindContext, extra: Extra): Bool
 }
+
+public var globalId = AtomicUInt64(0)
 
 public class Item <: Trace<Tracer, Unit> & IsOpaque<Unit> {
     public let id: ItemId
@@ -33,7 +36,7 @@ public class Item <: Trace<Tracer, Unit> & IsOpaque<Unit> {
 
         this.id = id
         this.localId = None
-        this.nextChildLocalId = 1
+        this.nextChildLocalId = globalId.load()
         this.canonicalName = ""
         this.parentId = parentId
         this.comment = comment
@@ -62,9 +65,9 @@ public class Item <: Trace<Tracer, Unit> & IsOpaque<Unit> {
     }
 
     public func getNextChildLocalId(): ItemId {
-        let v = this.nextChildLocalId
-        this.nextChildLocalId += 1
-        return v
+        globalId.fetchAdd(1)
+        this.nextChildLocalId = globalId.load()
+        return this.nextChildLocalId
     }
 
     public func getLocalId(ctx: CjbindContext): ItemId {
