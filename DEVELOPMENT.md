@@ -23,14 +23,6 @@ uv run scripts/patch_opt.py
 
 - 更新 `cjpm.toml`
 
-## 生成 libclang 绑定
-
-假设 `libclang` 的头文件在 `T:\cjbind-bootstrap\include\clang-c\Index.h`，可以使用以下命令生成 `libclang.cj`：
-
-```
-cjbind -o libclang.cj -p cjbind.clang T:\cjbind-bootstrap\include\clang-c\Index.h -- -I T:\cjbind-bootstrap\include\
-```
-
 ## 拉取最新的 `libclang` 预编译包
 
 此程序依赖于 `libclang`，请确保你的系统中安装了 `llvm`。
@@ -41,6 +33,10 @@ cjbind -o libclang.cj -p cjbind.clang T:\cjbind-bootstrap\include\clang-c\Index.
 uv run scripts/download.py
 ```
 
+## 安装 gcc 环境
+
+windows 平台还需要通过 MSYS2 安装 mingw-w64-x86_64-gcc 编译器。
+
 ## 构建
 
 因为仓颉当前不支持在 `build.cj` 中设置 `link-options`, 因此编译时需要设置环境变量来完成链接。
@@ -49,4 +45,12 @@ uv run scripts/download.py
 
 ```
 uv run scripts/cjpm.py build -V
+```
+
+## 生成 libclang 绑定
+
+假设 `libclang` 的头文件在 `T:\cjbind-bootstrap\include\clang-c\Index.h`，可以使用以下命令生成 `libclang.cj`：
+
+```
+cjbind -o libclang.cj -p cjbind.clang T:\cjbind-bootstrap\include\clang-c\Index.h -- -I T:\cjbind-bootstrap\include\
 ```
