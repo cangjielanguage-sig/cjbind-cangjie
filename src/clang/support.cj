@@ -5,6 +5,7 @@ import std.process.{launch, ProcessRedirect}
 import std.io.{readString, ByteBuffer}
 import std.collection.{collectArray, ArrayList, Map, HashMap}
 import std.posix.{access, isReg, X_OK}
+import std.env.getVariables
 import glob
 
 @When[os == "Linux"]
@@ -31,7 +32,7 @@ func isExecutable(path: String): Bool {
 func run(bin: String, args: Array<String>, readStderr!: Bool = false, env!: Option<Map<String, String>> = None): ?String {
     try {
         let p = launch(bin, args, stdIn: ProcessRedirect.Discard, stdOut: ProcessRedirect.Pipe,
-                       stdErr: ProcessRedirect.Pipe)
+                       stdErr: ProcessRedirect.Pipe, environment: env)
         let (_, out, err) = p.waitOutput()
         let buf = if (readStderr) {
             ByteBuffer(err)
@@ -71,7 +72,10 @@ func extractCCSearchPaths(path: String, args: Array<String>): ?Array<String> {
     let ccArgs = ArrayList<String>(["-E", "-x", "c", "-", "-v"])
     ccArgs.add(all: args)
 
-    let output = if (let Some(v) <- run(path, ccArgs.toArray(), readStderr: true)) {
+    let env = HashMap<String, String>(getVariables())
+    env["LC_ALL"] = "C"
+
+    let output = if (let Some(v) <- run(path, ccArgs.toArray(), readStderr: true, env: env)) {
         v
     } else {
         return None
