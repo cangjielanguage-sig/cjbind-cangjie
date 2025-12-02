@@ -30,7 +30,8 @@ func isExecutable(path: String): Bool {
 
 func run(bin: String, args: Array<String>, readStderr!: Bool = false, env!: Option<Map<String, String>> = None): ?String {
     try {
-        let p = launch(bin, args, stdIn: ProcessRedirect.Discard, environment: env)
+        let p = launch(bin, args, stdIn: ProcessRedirect.Discard, stdOut: ProcessRedirect.Pipe,
+                       stdErr: ProcessRedirect.Pipe)
         let (_, out, err) = p.waitOutput()
         let buf = if (readStderr) {
             ByteBuffer(err)
@@ -70,8 +71,7 @@ func extractCCSearchPaths(path: String, args: Array<String>): ?Array<String> {
     let ccArgs = ArrayList<String>(["-E", "-x", "c", "-", "-v"])
     ccArgs.add(all: args)
 
-    let env = HashMap(("LC_ALL", "C"))
-    let output = if (let Some(v) <- run(path, ccArgs.toArray(), readStderr: true, env: env)) {
+    let output = if (let Some(v) <- run(path, ccArgs.toArray(), readStderr: true)) {
         v
     } else {
         return None
