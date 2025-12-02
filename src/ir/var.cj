@@ -4,6 +4,7 @@ import std.collection.ArrayList
 import cjbind.clang
 import cjbind.result.Result
 import std.ast.{Tokens, ToTokens, Token, TokenKind}
+import std.collection.{collectArray, collectArrayList}
 
 public class Var <: ClangSubItemParser<Var> {
     public let name: String
@@ -95,6 +96,16 @@ public class Var <: ClangSubItemParser<Var> {
             let tyId = match (Item.fromTy(ty, cursor, None, ctx)) {
                 case Ok(v) => v
                 case Err(e) => return Err(e)
+            }
+
+            if (!isConst) {
+                let value = StringBuilder()
+                for (clangToken in clang.RawTokens(cursor)) {
+                    value.append(clangToken.spelling())
+                    value.append(" ")
+                }
+                let varr = Var(name, tyId, VarType.VarRawString(value.toString()), isConst)
+                return Ok(ParseResult.New(varr, Some(cursor)))
             }
 
             let canonicalTy = ctx.safeResolveType(tyId).flatMap {
@@ -250,4 +261,5 @@ public enum VarType {
     | VarFloat(Float64)
     | VarChar(UInt8)
     | VarString(CString)
+    | VarRawString(String)
 }

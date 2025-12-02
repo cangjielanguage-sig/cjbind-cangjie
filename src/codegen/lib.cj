@@ -354,6 +354,18 @@ extend Var <: CodeGenerator<Item, Unit> {
                             quote(public const $(canonicalIdent) : $(ty) = $(vv))
                         )
                     )
+                case VarType.VarRawString(vv) =>
+                    let tokens = Tokens([
+                        Token(TokenKind.IDENTIFIER, "/*FIXME: Non-constant global variable details need to be verified and rewritten by user.*/"),
+                        Token(TokenKind.NL),
+                        Token(TokenKind.IDENTIFIER, "/* ${vv}*/")
+                    ])
+                    result.items.add(optionalComment(
+                            ctx,
+                            commentToken,
+                            tokens
+                        )
+                    )
             }
         } else {
             // 仓颉没有提供 extern C 的变量支持，忽略
