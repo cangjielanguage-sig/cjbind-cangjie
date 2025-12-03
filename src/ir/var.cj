@@ -131,7 +131,7 @@ public class Var <: ClangSubItemParser<Var> {
                 } else {
                     let kv = iv.getOrThrow().toInts()
                     match (kind) {
-                        case IntKindBool => VarType.VarBool(kv.isZero())
+                        case IntKindBool => VarType.VarBool(!kv.isZero())
                         case _ => VarType.VarInt(kv)
                     }
                 }
