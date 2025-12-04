@@ -23,16 +23,6 @@ uv run scripts/patch_opt.py
 
 - 更新 `cjpm.toml`
 
-## 拉取最新的 `libclang` 预编译包
-
-此程序依赖于 `libclang`，请确保你的系统中安装了 `llvm`。
-
-当前 `cjbind` 使用 `qt` 提供的预编译 `libclang`。使用以下命令下载 `libclang`：
-
-```
-uv run scripts/download.py
-```
-
 ## 安装 gcc 环境
 
 windows 平台还需要通过 MSYS2 安装 mingw-w64-x86_64-gcc 编译器。
