@@ -15,9 +15,35 @@ def root_dir():
     return os.path.dirname(script_dir)
 
 
+def libclang_dir():
+    return os.path.join(root_dir(), 'lib', 'libclang')
+
+
 def cpp_lds():
     return os.path.join(root_dir(), 'scripts', 'cpp.lds')
 
+
+def run_llvm_config(*args):
+    llvm_config_path = os.path.join(libclang_dir(), 'bin', 'llvm-config')
+    if sys.platform == "win32":
+        llvm_config_path += ".exe"
+
+    if not os.path.isfile(llvm_config_path):
+        raise FileNotFoundError(
+            f"The llvm-config executable was not found at {llvm_config_path}")
+
+    cmd = [llvm_config_path] + list(args)
+
+    try:
+        output = subprocess.check_output(
+            cmd,
+            text=True,
+            stderr=subprocess.STDOUT
+        )
+        return output.strip()
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Command {cmd} failed with output:\n{e.output}") from e
 
 
 def read_version():
@@ -29,20 +55,23 @@ def read_version():
 
 def preprocess_environment(env):
     ldflags = ""
-    cangjie_home_dir = os.environ.get("CANGJIE_HOME")
+    download_llvm_libdir = ""
+    if sys.platform == "linux":
+        download_llvm_libdir = run_llvm_config("--libdir")
+    cangjie_llvm_libdir = f"{os.environ.get("CANGJIE_HOME")}/third_party/llvm/bin"
 
     debug = "-g" in sys.argv
 
     match sys.platform:
         case "win32":
-            ldflags += f" -L {cangjie_home_dir}/third_party/llvm/bin"
+            ldflags += f" -L {cangjie_llvm_libdir}"
 
             if not debug:
                 ldflags = "--strip-all" + ldflags
         case "darwin":
-            ldflags += f"-search_paths_first -headerpad_max_install_names -L {cangjie_home_dir}/third_party/llvm/bin"
+            ldflags += f"-search_paths_first -headerpad_max_install_names -L {cangjie_llvm_libdir}"
         case "linux":
-            ldflags += f" --gc-sections --gc-keep-exported -L {cangjie_home_dir}/third_party/llvm/bin -T {cpp_lds()}"
+            ldflags += f" --gc-sections --gc-keep-exported -L {download_llvm_libdir} -T {cpp_lds()}"
             if not debug:
                 ldflags = "--strip-all" + ldflags
 
@@ -53,13 +82,30 @@ def preprocess_environment(env):
 
     ldflags += " "
 
+    if sys.platform == "linux":
+        ldflags += run_llvm_config("--system-libs")
+
+        ldflags += " "
+
+        static_libs = run_llvm_config("--link-static", "--libs")
+
+        for lib in static_libs.split():
+            lib_name = lib[2:]
+            ldflags += f" -l:lib{lib_name}.a "
+
+        libdir = Path(os.path.join(libclang_dir(), "lib"))
+
+        for lib in libdir.glob("libclang*.a"):
+            lib_name = lib.stem
+            ldflags += f" -l:{lib_name}.a "
+
     match sys.platform:
         case "win32":
             ldflags += " -lclang -l:libstdc++.a -l:libwinpthread.a -lmingwex -lmsvcrt -lversion -lunwind "
         case "darwin":
             ldflags += " -lclang -lc++ -lc++abi -lSystem "
         case "linux":
-            ldflags += " -lclang -l:libstdc++.a -lgcc_s "
+            ldflags += " -l:libstdc++.a -lgcc_s "
 
     if sys.platform != "darwin":
         ldflags += "--end-group"
