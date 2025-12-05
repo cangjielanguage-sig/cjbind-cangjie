@@ -69,7 +69,7 @@ def preprocess_environment(env):
             if not debug:
                 ldflags = "--strip-all" + ldflags
         case "darwin":
-            ldflags += f"-search_paths_first -headerpad_max_install_names -L {cangjie_llvm_libdir}"
+            ldflags += f"-search_paths_first -headerpad_max_install_names -L " + os.path.join(root_dir(), 'libs')
         case "linux":
             ldflags += f" --gc-sections --gc-keep-exported -L {download_llvm_libdir} -T {cpp_lds()}"
             if not debug:
