@@ -55,12 +55,13 @@ def read_version():
 def preprocess_environment(env):
     ldflags = ""
     libdir = run_llvm_config("--libdir")
+    cangjie_home_dir = os.environ.get("CANGJIE_HOME")
 
     debug = "-g" in sys.argv
 
     match sys.platform:
         case "win32":
-            ldflags += f" -L{libdir}"
+            ldflags += f" -L{libdir} -L {cangjie_home_dir}/third_party/llvm/bin"
             if not debug:
                 ldflags = "--strip-all" + ldflags
         case "darwin":
@@ -102,7 +103,7 @@ def preprocess_environment(env):
 
     match sys.platform:
         case "win32":
-            ldflags += " -l:libstdc++.a -l:libwinpthread.a -lmingwex -lmsvcrt -lversion "
+            ldflags += " -l:libstdc++.a -l:libwinpthread.a -lmingwex -lmsvcrt -lversion -lunwind "
         case "darwin":
             ldflags += " -lc++ -lc++abi -lSystem "
         case "linux":
