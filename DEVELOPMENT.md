@@ -25,9 +25,9 @@ uv run scripts/patch_opt.py
 
 ## 拉取最新的 `libclang` 预编译包
 
-此程序依赖于 `libclang`，windows和mac平台使用cangjie sdk中的libclang。
+此程序依赖于 `libclang`，请确保你的系统中安装了 `llvm`。
 
-linux平台上cangjie sdk中没有libclang，当前使用 `qt` 提供的预编译 `libclang`，使用以下命令下载 `libclang`：
+当前 `cjbind` 使用 `qt` 提供的预编译 `libclang`。使用以下命令下载 `libclang`：
 
 ```
 uv run scripts/download.py

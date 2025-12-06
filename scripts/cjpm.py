@@ -44,8 +44,7 @@ def run_llvm_config(*args):
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"Command {cmd} failed with output:\n{e.output}") from e
-
-
+    
 def read_version():
     cjpm_toml = os.path.join(root_dir(), "cjpm.toml")
     with open(cjpm_toml, "rb") as f:
@@ -55,23 +54,19 @@ def read_version():
 
 def preprocess_environment(env):
     ldflags = ""
-    download_llvm_libdir = ""
-    if sys.platform == "linux":
-        download_llvm_libdir = run_llvm_config("--libdir")
-    cangjie_llvm_libdir = f"{os.environ.get("CANGJIE_HOME")}/third_party/llvm/bin"
+    libdir = run_llvm_config("--libdir")
 
     debug = "-g" in sys.argv
 
     match sys.platform:
         case "win32":
-            ldflags += f" -L {cangjie_llvm_libdir}"
-
+            ldflags += f" -L{libdir}"
             if not debug:
                 ldflags = "--strip-all" + ldflags
         case "darwin":
-            ldflags += f"-search_paths_first -headerpad_max_install_names -L " + os.path.join(root_dir(), 'libs')
+            ldflags += f"-L{libdir} -search_paths_first -headerpad_max_install_names"
         case "linux":
-            ldflags += f" --gc-sections --gc-keep-exported -L {download_llvm_libdir} -T {cpp_lds()}"
+            ldflags += f" --gc-sections --gc-keep-exported -L{libdir} -T {cpp_lds()}"
             if not debug:
                 ldflags = "--strip-all" + ldflags
 
@@ -82,28 +77,34 @@ def preprocess_environment(env):
 
     ldflags += " "
 
-    if sys.platform == "linux":
-        ldflags += run_llvm_config("--system-libs")
+    ldflags += run_llvm_config("--system-libs")
 
-        ldflags += " "
+    ldflags += " "
 
-        static_libs = run_llvm_config("--link-static", "--libs")
-
+    static_libs = run_llvm_config("--link-static", "--libs")
+    
+    if sys.platform != "darwin":
         for lib in static_libs.split():
             lib_name = lib[2:]
             ldflags += f" -l:lib{lib_name}.a "
+    else:
+        ldflags += static_libs + " "
 
-        libdir = Path(os.path.join(libclang_dir(), "lib"))
+    libdir = Path(os.path.join(libclang_dir(), "lib"))
 
-        for lib in libdir.glob("libclang*.a"):
-            lib_name = lib.stem
+    for lib in libdir.glob("libclang*.a"):
+        lib_name = lib.stem
+        if sys.platform != "darwin":
             ldflags += f" -l:{lib_name}.a "
+        else:
+            lib_name = lib_name[3:]
+            ldflags += f" -l{lib_name} "
 
     match sys.platform:
         case "win32":
-            ldflags += " -lclang -l:libstdc++.a -l:libwinpthread.a -lmingwex -lmsvcrt -lversion -lunwind "
+            ldflags += " -l:libstdc++.a -l:libwinpthread.a -lmingwex -lmsvcrt -lversion "
         case "darwin":
-            ldflags += " -lclang -lc++ -lc++abi -lSystem "
+            ldflags += " -lc++ -lc++abi -lSystem "
         case "linux":
             ldflags += " -l:libstdc++.a -lgcc_s "
 
