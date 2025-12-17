@@ -91,7 +91,6 @@ public class CompInfo <: IsOpaque<Option<Layout>> & Trace<Tracer, Item> {
                     // do nothing
                     } else {
                         let field = RawField(None, ty, None, None, offset)
-                        maybeAnonymousStructField.value = None
                         /*  If the anonymous struct has identifier, we should translate it by field decl.
                             struct Point1 {
                                 struct {
@@ -103,6 +102,7 @@ public class CompInfo <: IsOpaque<Option<Layout>> & Trace<Tracer, Item> {
                         if (k == clang.CXCursorKind_CXCursor_FieldDecl) {
                             let spell = cur.spelling()
                             if (spell.isEmpty()) {
+                                maybeAnonymousStructField.value = None
                                 ci.fields.appendRawField(field)
                             }
                         }
