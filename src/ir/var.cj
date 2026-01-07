@@ -118,8 +118,35 @@ public class Var <: ClangSubItemParser<Var> {
             let isFloat = canonicalTy.flatMap {
                 t => t.isFloat()
             }.getOrDefault {=> false}
+            let isArray = canonicalTy.flatMap {
+                t => t.isArray()
+            }.getOrDefault {=> false}
 
-            let value: ?VarType = if (isInteger) {
+            let value: ?VarType = if (isArray) {
+                var vt = Option<VarType>.None
+
+                // For array variables with initialization lists, we need to get the initializer cursor
+                let initializerCursor = cursor.varDeclInitializer()
+                if (initializerCursor.isValid() && 
+                    initializerCursor.kind() == clang.CXCursorKind_CXCursor_InitListExpr) {
+                    // For InitListExpr, we need to manually evaluate each element
+                    let children = initializerCursor.collectChildren()
+
+                    // Try integer array first
+                    let intValues = collectIntegerValues(children)
+                    if (intValues.isSome()) {
+                        vt = VarType.VarIntArray(intValues.getOrThrow().toArray())
+                    }
+                    
+                    // Try float array
+                    let floatValues = collectFloatValues(children)
+                    if (floatValues.isSome()) {
+                        vt = VarType.VarFloatArray(floatValues.getOrThrow().toArray())
+                    }
+                }
+
+                vt
+            }  else if (isInteger) {
                 let kind = match (canonicalTy.getOrThrow().kind) {
                     case TypeKind.TypeKindInt(k) => k
                     case _ => throw Exception("Should be int type")
@@ -216,6 +243,44 @@ func parseMacroClangFallback(
 }
 // cjlint-ignore -end
 
+// Helper functions to collect array values from InitListExpr children
+func collectIntegerValues(children: ArrayList<clang.Cursor>): ?ArrayList<Int64> {
+    let intValues = ArrayList<Int64>()
+    
+    for (child in children) {
+        let evalResult = clang.EvalResult(child)
+        let intValOpt = evalResult.asInt()
+        if (intValOpt.isSome()) {
+            match (intValOpt.getOrThrow()) {
+                case clang.EvalResultInt.Int(v) =>intValues.add(v)
+                case clang.EvalResultInt.UInt(v) =>intValues.add(Int64(v))
+            }
+        }
+    }
+    
+    if (intValues.isEmpty()) {
+        return None
+    }
+    return Some(intValues)
+}
+
+func collectFloatValues(children: ArrayList<clang.Cursor>): ?ArrayList<Float64> {
+    let floatValues = ArrayList<Float64>()
+    
+    for (child in children) {
+        let evalResult = clang.EvalResult(child)
+        let floatValOpt = evalResult.asDouble()
+        if (floatValOpt.isSome()) {
+            floatValues.add(floatValOpt.getOrThrow())
+        }
+    }
+    
+    if (floatValues.isEmpty()) {
+        return None
+    }
+    return Some(floatValues)
+}
+
 public enum Ints <: ToTokens {
     Int(Int64) |
     UInt(UInt64)
@@ -255,11 +320,26 @@ extend clang.EvalResultInt {
     }
 }
 
-public enum VarType {
+public enum VarType <: ToString{
     VarBool(Bool)
     | VarInt(Ints)
     | VarFloat(Float64)
     | VarChar(UInt8)
     | VarString(CString)
     | VarRawString(String)
+    | VarIntArray(Array<Int64>)
+    | VarFloatArray(Array<Float64>)
+
+    public func toString(): String {
+        match (this) {
+            case VarBool(v) => "VarBool"
+            case VarInt(v) => "VarInt"
+            case VarFloat(v) => "VarFloat"
+            case VarChar(v) => "VarChar"
+            case VarString(v) => "VarString"
+            case VarRawString(v) => "VarRawString"
+            case VarIntArray(v) => "VarIntArray"
+            case VarFloatArray(v) => "VarFloatArray"
+        }
+    }
 }

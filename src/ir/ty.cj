@@ -98,6 +98,13 @@ public class Type <: IsOpaque<Item> & Trace<Tracer, Item> {
         }
     }
 
+    public func isArray(): Bool {
+        match (this.kind) {
+            case TypeKind.TypeKindArray(_, _) => true
+            case _ => false
+        }
+    }
+
     public func isEnum(): Bool {
         match (this.kind) {
             case TypeKind.TypeKindEnum(_) => true
@@ -457,7 +464,7 @@ public class Type <: IsOpaque<Item> & Trace<Tracer, Item> {
     // cjlint-ignore -end
 }
 
-public enum TypeKind {
+public enum TypeKind <: ToString{
     TypeKindVoid
     | TypeKindNullPtr
     | TypeKindComp(CompInfo)
@@ -473,4 +480,24 @@ public enum TypeKind {
     | TypeKindPointer(TypeId)
     | UnresolvedTypeRef(clang.Type, clang.Cursor, ?ItemId)
     | ResolvedTypeRef(TypeId)
+
+    public func toString(): String {
+        match (this) {
+            case TypeKindVoid => "TypeKindVoid"
+            case TypeKindNullPtr => "TypeKindNullPtr"
+            case TypeKindComp(v) => "TypeKindComp"
+            case TypeKindOpaque => "TypeKindOpaque"
+            case TypeKindInt(v) => "TypeKindInt"
+            case TypeKindFloat(v) => "TypeKindFloat"
+            case TypeKindComplex(v) => "TypeKindComplex"
+            case TypeKindAlias(v) => "TypeKindAlias"
+            case TypeKindVector(v, size) => "TypeKindVector"
+            case TypeKindArray(v, size) => "TypeKindArray"
+            case TypeKindFunction(v) => "TypeKindFunction"
+            case TypeKindEnum(v) => "TypeKindEnum"
+            case TypeKindPointer(v) => "TypeKindPointer"
+            case UnresolvedTypeRef(v, _,_) => "UnresolvedTypeRef"
+            case ResolvedTypeRef(v) => "ResolvedTypeRef"
+        }
+    }
 }

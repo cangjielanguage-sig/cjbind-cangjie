@@ -204,6 +204,12 @@ public class Cursor <: ToString & Hashable & Equatable<Cursor> {
             return Cursor(clang_getCanonicalCursor(x))
         }
     }
+    
+    public func varDeclInitializer(): Cursor {
+        unsafe {
+            return Cursor(clang_Cursor_getVarDeclInitializer(x))
+        }
+    }
 
     public func linkage(): CXLinkageKind {
         unsafe {

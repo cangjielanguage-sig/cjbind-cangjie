@@ -366,6 +366,35 @@ extend Var <: CodeGenerator<Item, Unit> {
                             tokens
                         )
                     )
+                case VarType.VarIntArray(vv) =>
+                    let arraySize = vv.size
+                    let tokens = quote(public const $(canonicalIdent) : VArray<Int64, \$$(arraySize)> = $(vv))
+                    result.items.add(
+                        optionalComment(
+                            ctx,
+                            commentToken,
+                            tokens
+                        )
+                    )
+                case VarType.VarFloatArray(vv) =>
+                    let arraySize = vv.size
+                    let arrTokens = quote([)
+                    for ((idx, val) in vv.iterator().enumerate()) {
+                        let floatTokens = float64toTokens(val)
+                        arrTokens.append(floatTokens)
+                        if (idx < vv.size - 1) {
+                            arrTokens.append(quote(,))
+                        }
+                    }
+                    arrTokens.append(quote(]))
+                    let tokens = quote(public const $(canonicalIdent) : VArray<Float64, \$$(arraySize)> = $(arrTokens))
+                    result.items.add(
+                        optionalComment(
+                            ctx,
+                            commentToken,
+                            tokens
+                        )
+                    )
             }
         } else {
             // 仓颉没有提供 extern C 的变量支持，忽略
