@@ -122,9 +122,12 @@ public class CompInfo <: IsOpaque<Option<Layout>> & Trace<Tracer, Item> {
 
                         if (!used.value) {
                             let field = RawField(None, ty, None, None, offset)
-                            maybeAnonymousStructField.value = None
                             ci.fields.appendRawField(field)
                         }
+                        // The anonymous struct is referenced by this named field
+                        // (or is an unnamed member handled above), so the pending
+                        // state must be cleared to avoid a duplicate trailing field.
+                        maybeAnonymousStructField.value = None
                     }
 
                     let bitWidth: ?UInt32 = if (cur.isBitField()) {

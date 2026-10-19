@@ -13,6 +13,9 @@ public type TypeId = ItemId
 
 public type ModuleId = ItemId
 
+@C
+foreign func getpid(): Int32
+
 extend ItemId <: IsOpaque<Unit> & Trace<Tracer, Unit> {
     public func isOpaque(ctx: CjbindContext, _: Unit): Bool {
         return ctx.resolveItem(this).isOpaque(ctx, ())
@@ -125,7 +128,12 @@ public class CjbindContext {
             return this.fallbackTu
         }
 
-        let file = "./.macro_eval.c"
+        // NOTE: this file (and the pch below) must be unique per process:
+        // multiple cjbind instances may run concurrently in the same cwd
+        // (e.g. HLE -d mode spawns one cjbind per header), and a shared name
+        // races on create/parse/remove and breaks macro evaluation.
+        let pid = unsafe { getpid() }
+        let file = "./.macro_eval_${pid}.c"
 
         let index = clang.Index(false, false)
 
@@ -157,7 +165,7 @@ public class CjbindContext {
 
             headerNamesToCompile.add(compileName)
         }
-        let pch = "./" + String.join(headerNamesToCompile.toArray(), delimiter: "-") + "-precompile.h.pch"
+        let pch = "./" + String.join(headerNamesToCompile.toArray(), delimiter: "-") + "-precompile.h.${pid}.pch"
 
         var cArgs = ArrayList<String>()
         cArgs.add("-x")
