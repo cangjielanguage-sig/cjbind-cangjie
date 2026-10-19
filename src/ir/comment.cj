@@ -7,6 +7,17 @@ public enum CommentKind {
     | MultiLine
 }
 
+/// 转义注释文本中会破坏 Cangjie 注释定界符的字符序列：
+/// - `*/` → `*\/`、`/*` → `/\*`：防止提前终止或意外嵌套块注释
+/// - 换行符 → 字面 `\n`：防止逃逸行注释（Cangjie 行注释仅被 `\n` 终止）
+public func escapeComment(s: String): String {
+    s.replace("*/", "*\\/")
+        .replace("/*", "/\\*")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
+        .replace("\r", "\\n")
+}
+
 func commentKind(comment: String): ?CommentKind {
     if (comment.startsWith("/*")) {
         return Some(CommentKind.MultiLine)

@@ -306,7 +306,7 @@ extend Var <: CodeGenerator<Item, Unit> {
 
                         let tokens = quote(public const $(canonicalIdent) : VArray<UInt8, \$$(dataSize)> = $(dataTokens))
 
-                        let origStr = Token(TokenKind.COMMENT, "// String value: ${vv}")
+                        let origStr = Token(TokenKind.COMMENT, "// String value: ${escapeComment(vv.toString())}")
                         if (let Some(v) <- commentToken) {
                             v.append(Token(TokenKind.NL))
                             v.append(origStr)
@@ -358,7 +358,7 @@ extend Var <: CodeGenerator<Item, Unit> {
                     let tokens = Tokens([
                         Token(TokenKind.IDENTIFIER, "/*FIXME: Non-constant global variable details need to be verified and rewritten by user.*/"),
                         Token(TokenKind.NL),
-                        Token(TokenKind.IDENTIFIER, "/* ${vv}*/")
+                        Token(TokenKind.IDENTIFIER, "/* ${escapeComment(vv)}*/")
                     ])
                     result.items.add(optionalComment(
                             ctx,
